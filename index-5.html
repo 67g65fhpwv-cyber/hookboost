@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TikTokBoost — Perce sur TikTok</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#000;
+    --midnight:#0a0a1c;
+    --deep:#12123a;
+    --blue:#2f6bff;
+    --violet:#8b5cf6;
+    --ultra:#c9bbff;
+    --mist:#9a9cc8;
+    --line:rgba(140,140,255,.16);
+    --ok:#4ade9b; --warn:#fbbf24; --bad:#ff5d8f;
+    --display:"Unbounded","Manrope",system-ui,sans-serif;
+    --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--void)}
+  body{font-family:var(--body);color:#f1f1ff;background:var(--void);line-height:1.55;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+  :focus-visible{outline:2px solid var(--ultra);outline-offset:3px}
+
+  /* Aurore : seule animation de fond, lente */
+  .aurora{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+  .aurora i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+  .aurora i:nth-child(1){width:60vw;height:60vw;max-width:760px;max-height:760px;left:-12%;top:-22%;background:radial-gradient(circle,var(--blue),transparent 65%);animation:drift1 22s ease-in-out infinite alternate}
+  .aurora i:nth-child(2){width:55vw;height:55vw;max-width:700px;max-height:700px;right:-14%;top:8%;background:radial-gradient(circle,var(--violet),transparent 65%);animation:drift2 26s ease-in-out infinite alternate}
+  @keyframes drift1{to{transform:translate(8vw,6vh) scale(1.12)}}
+  @keyframes drift2{to{transform:translate(-7vw,10vh) scale(.92)}}
+  @media (prefers-reduced-motion:reduce){.aurora i{animation:none}*{transition:none!important}}
+
+  header{width:100%;max-width:1080px;margin:0 auto;padding:22px 24px;display:flex;align-items:center;justify-content:space-between}
+  .logo{font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+  .logo svg{flex:none}
+  .logo b{font-weight:700;background:linear-gradient(90deg,var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  main{flex:1;width:100%;max-width:1080px;margin:0 auto;padding:12px 24px 60px}
+
+  /* ===== Accueil ===== */
+  .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding-top:18px}
+  h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5.4vw,3.55rem);line-height:1.06;letter-spacing:-.035em;text-wrap:balance}
+  .lead{color:var(--mist);font-size:1.08rem;max-width:46ch;margin:18px 0 28px}
+
+  .bar{background:linear-gradient(180deg,rgba(18,18,58,.85),rgba(10,10,28,.9));border:1px solid var(--line);border-radius:22px;padding:8px;box-shadow:0 0 0 1px rgba(47,107,255,.06),0 24px 60px rgba(47,107,255,.18);backdrop-filter:blur(8px)}
+  .bar:focus-within{border-color:rgba(139,92,246,.7);box-shadow:0 0 0 4px rgba(139,92,246,.18),0 24px 60px rgba(47,107,255,.25)}
+  .field{display:flex;align-items:center;gap:12px;padding:0 14px}
+  .field svg{flex:none;opacity:.7}
+  .field input,.field textarea{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#fff;font:inherit;font-size:1rem;padding:17px 0}
+  .field textarea{resize:none;height:84px;padding-top:16px}
+  .field input::placeholder,.field textarea::placeholder{color:#6d6fa0}
+  .go{width:100%;border:0;border-radius:16px;padding:16px 18px;font:inherit;font-weight:800;font-size:1.02rem;color:#fff;cursor:pointer;background:linear-gradient(100deg,var(--blue),var(--violet));transition:filter .2s,transform .15s}
+  .go:hover{filter:brightness(1.12)} .go:active{transform:scale(.99)} .go:disabled{opacity:.6;cursor:wait}
+  .switch{margin-top:14px;font-size:.9rem;color:var(--mist)}
+  .switch a{color:var(--ultra);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .err{display:none;margin:8px 8px 10px;background:rgba(255,93,143,.1);border:1px solid rgba(255,93,143,.4);color:#ffb9d0;border-radius:12px;padding:11px 14px;font-size:.9rem}
+  .facts{display:flex;gap:22px;flex-wrap:wrap;margin-top:26px;color:var(--mist);font-size:.9rem}
+  .facts span{display:flex;align-items:center;gap:8px}
+  .facts svg{color:var(--violet)}
+
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:48px}
+  .choice h2{font-family:var(--display);font-weight:500;font-size:1.15rem;letter-spacing:-.02em;margin-bottom:6px}
+  .choice>p{color:var(--mist);font-size:.95rem;margin-bottom:14px;max-width:44ch}
+  #idea{height:118px}
+  #cap{height:84px}
+  @media(max-width:860px){.choices{grid-template-columns:1fr;margin-top:34px}}
+  /* ===== Réacteur (élément signature) ===== */
+  .reactor{position:relative;width:min(100%,340px);aspect-ratio:1;margin:0 auto}
+  .reactor::before{content:"";position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.35),rgba(47,107,255,.12) 55%,transparent 72%);filter:blur(18px)}
+  .reactor svg{position:relative;width:100%;height:100%;display:block}
+  .reactor .tick{stroke-width:3.2;stroke-linecap:round;transition:stroke .25s,opacity .25s}
+  .reactor.scan .tick{animation:breathe 2.4s ease-in-out infinite}
+  @keyframes breathe{50%{opacity:.35}}
+  .reactor .core{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .core b{font-family:var(--display);font-size:clamp(2.6rem,9vw,3.6rem);font-weight:700;letter-spacing:-.05em;line-height:1}
+  .core small{display:block;color:var(--mist);font-size:.85rem;margin-top:6px}
+  .reactor.hidden .core b{filter:blur(10px);user-select:none}
+  .sample{text-align:center;color:var(--mist);font-size:.82rem;margin-top:10px}
+
+  /* ===== Chargement ===== */
+  #loading{display:none;text-align:center;padding:90px 10px}
+  #loading .reactor{width:150px;margin-bottom:22px}
+  #loading p{color:var(--mist)}
+
+  /* ===== Résultat ===== */
+  #result{display:none}
+  .res{display:grid;grid-template-columns:.9fr 1.1fr;gap:44px;align-items:start;padding-top:14px}
+  .rleft{position:sticky;top:20px;text-align:center}
+  .who{font-family:var(--display);font-weight:500;font-size:1.05rem;color:var(--ultra);margin-bottom:6px}
+  .rleft h2{font-family:var(--display);font-size:1.6rem;letter-spacing:-.03em;margin-bottom:22px}
+  .verdict{font-family:var(--display);font-weight:500;font-size:1.15rem;margin-top:20px}
+  .vsub{color:var(--mist);font-size:.92rem;margin-top:4px;min-height:1.4em}
+  .vid{display:none;gap:14px;align-items:center;text-align:left;margin-top:24px;padding:12px;border:1px solid var(--line);border-radius:16px;background:rgba(10,10,28,.7)}
+  .vid img{width:52px;height:70px;object-fit:cover;border-radius:10px;background:var(--deep);flex:none}
+  .vid p{font-size:.85rem;color:var(--mist);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+  .panel{border:1px solid var(--line);border-radius:26px;padding:26px;background:linear-gradient(180deg,rgba(18,18,58,.7),rgba(10,10,28,.8));margin-bottom:18px}
+  .panel h3{font-family:var(--display);font-weight:500;font-size:1.05rem;letter-spacing:-.02em;margin-bottom:6px}
+  .panel .sub{color:var(--mist);font-size:.92rem;margin-bottom:18px}
+  .payerr{display:none;margin-top:14px;background:rgba(255,93,143,.1);border:1px solid rgba(255,93,143,.4);color:#ffb9d0;border-radius:12px;padding:11px 14px;font-size:.9rem}
+  .plan:disabled{opacity:.6;cursor:wait;transform:none}
+  .plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .plan{display:flex;flex-direction:column;gap:4px;text-align:left;cursor:pointer;font:inherit;color:#fff;padding:18px;border-radius:18px;border:1px solid var(--line);background:rgba(0,0,0,.4);transition:border-color .2s,transform .15s,background .2s}
+  .plan:hover{border-color:rgba(139,92,246,.7);transform:translateY(-2px)}
+  .plan .pname{font-weight:700;color:var(--ultra);font-size:.95rem}
+  .plan .pprice{font-family:var(--display);font-weight:700;font-size:1.9rem;letter-spacing:-.04em;line-height:1.1}
+  .plan .pprice small{font-family:var(--body);font-weight:600;font-size:.85rem;color:var(--mist);letter-spacing:0;margin-left:2px}
+  .plan .pdesc{color:var(--mist);font-size:.85rem}
+  .plan.best{border-color:transparent;background:linear-gradient(#0d0d28,#0d0d28) padding-box,linear-gradient(120deg,var(--blue),var(--violet)) border-box;border:1px solid transparent;box-shadow:0 14px 40px rgba(47,107,255,.3)}
+  @media(max-width:520px){.plans{grid-template-columns:1fr}}
+  .buy{width:100%;border:0;border-radius:16px;padding:17px;font:inherit;font-weight:800;font-size:1rem;color:#fff;cursor:pointer;background:linear-gradient(100deg,var(--blue),var(--violet));box-shadow:0 14px 40px rgba(47,107,255,.35);transition:filter .2s,transform .15s}
+  .buy:hover{filter:brightness(1.12)} .buy:active{transform:scale(.99)}
+  .demo{margin-top:12px;background:none;border:0;color:var(--mist);font:inherit;font-size:.8rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+  .cats{list-style:none}
+  .cat{padding:13px 0;border-top:1px solid var(--line)}
+  .cat:first-child{border-top:0}
+  .cat .t{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.95rem;margin-bottom:8px}
+  .cat .t em{font-style:normal;color:var(--mist);font-variant-numeric:tabular-nums}
+  .track{height:6px;border-radius:99px;background:rgba(140,140,255,.14);overflow:hidden}
+  .track i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--violet));transition:width .9s cubic-bezier(.2,.8,.2,1)}
+  .cat.lock .t em{filter:blur(5px);user-select:none}
+  .cat.lock .track i{width:55%;opacity:.35;filter:blur(2px)}
+  .lockrow{display:flex;align-items:center;gap:8px;color:var(--ultra);font-weight:700}
+
+  .hk{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.35);margin-bottom:10px}
+  .hk p{font-weight:600}
+  .hk small{display:block;color:var(--ok);font-weight:700;margin-top:3px}
+  .hk button{flex:none;border:1px solid var(--line);background:rgba(139,92,246,.14);color:var(--ultra);border-radius:9px;padding:6px 12px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+  ul.tips{list-style:none}
+  ul.tips li{padding:12px 0;border-top:1px solid var(--line);font-size:.94rem;color:#dcdcff}
+  ul.tips li:first-child{border-top:0}
+  ul.tips b{color:#fff}
+  .again{display:block;width:100%;margin-top:6px;background:none;border:1px solid var(--line);color:var(--ultra);border-radius:14px;padding:14px;font:inherit;font-weight:700;cursor:pointer}
+  .again:hover{background:rgba(139,92,246,.1)}
+
+  footer{text-align:center;padding:26px 20px;font-size:.8rem;color:#6d6fa0}
+  footer a{color:#6d6fa0;margin:0 10px;text-decoration:none}
+  footer a:hover{color:var(--ultra)}
+
+  @media(max-width:860px){
+    .hero{grid-template-columns:1fr;gap:34px}
+    .hero .reactor{width:min(78%,300px)}
+    .res{grid-template-columns:1fr;gap:26px}
+    .rleft{position:static}
+    main{padding:8px 18px 50px}
+    header{padding:18px}
+  }
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i></i><i></i></div>
+
+<header>
+  <div class="logo">
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f6bff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="26" height="26" rx="8" fill="url(#lg)"/><path d="M14.5 4.5 7.5 14.5h4.7l-1 7 7-10h-4.7z" fill="#fff"/></svg>
+    <span>TikTok<b>Boost</b></span>
+  </div>
+</header>
+
+<main>
+  <!-- ACCUEIL -->
+  <section id="home">
+    <div class="hero">
+      <div>
+        <h1>Ton hook décide si on scrolle ou si on reste.</h1>
+        <p class="lead">Conçu pour les créateurs qui veulent percer sur TikTok. Note ta vidéo ou ton idée : tu reçois une note et ce qu'il faut changer pour retenir plus de monde.</p>
+        <div class="facts">
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>30 secondes</span>
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>100 % privé</span>
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Note détaillée</span>
+        </div>
+      </div>
+      <div>
+        <div class="reactor" id="demoReactor"><div id="demoSvg"></div><div class="core"><div><b>60</b><small>sur 100</small></div></div></div>
+        <p class="sample">Exemple de note</p>
+      </div>
+    </div>
+
+    <div class="choices">
+      <div class="choice">
+        <h2>Ma vidéo est déjà postée</h2>
+        <p>Colle son lien. On la note et on te dit quoi corriger.</p>
+        <div class="bar">
+          <div class="field">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c9bbff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>
+            <input type="url" id="url" placeholder="https://www.tiktok.com/@toi/video/…" autocomplete="off" aria-label="Lien de ta vidéo TikTok">
+          </div>
+          <div id="cap-wrap" style="display:none">
+            <div class="field" style="margin-top:8px">
+              <textarea id="cap" maxlength="300" placeholder="Colle ici la légende (le texte) de ta vidéo…" aria-label="Légende de ta vidéo"></textarea>
+            </div>
+          </div>
+          <div class="err" id="err-link" role="alert"></div>
+          <button class="go" id="go-link" onclick="analyze('link')">Analyser ma vidéo</button>
+        </div>
+      </div>
+
+      <div class="choice">
+        <h2>Je n'ai pas encore posté</h2>
+        <p>Décris ton idée. On la note et on t'aide à l'améliorer avant de filmer.</p>
+        <div class="bar">
+          <div class="field">
+            <textarea id="idea" maxlength="600" placeholder="Ex : une vidéo pour montrer aux étudiants comment économiser 200 € par mois sans se priver…" aria-label="Ton idée de vidéo"></textarea>
+          </div>
+          <div class="err" id="err-idea" role="alert"></div>
+          <button class="go" id="go-idea" onclick="analyze('idea')">Analyser mon idée</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHARGEMENT -->
+  <section id="loading">
+    <div class="reactor scan hidden" id="loadReactor"><div id="loadSvg"></div></div>
+    <p id="lmsg">Analyse en cours…</p>
+  </section>
+
+  <!-- RÉSULTAT -->
+  <section id="result">
+    <div class="res">
+      <div class="rleft">
+        <div class="who" id="who">ta vidéo</div>
+        <h2>Ta note</h2>
+        <div class="reactor hidden scan" id="ring"><div id="ringSvg"></div><div class="core"><div><b id="score">??</b><small>sur 100</small></div></div></div>
+        <div class="verdict" id="verdict"></div>
+        <div class="vsub" id="vsub"></div>
+        <div class="vid" id="vid"><img id="vthumb" alt="" referrerpolicy="no-referrer"><p id="vcap"></p></div>
+      </div>
+
+      <div>
+        <div class="panel" id="pay">
+          <h3>Découvre la note de ta vidéo</h3>
+          <p class="sub">Tu débloques la note, le détail des 6 catégories, 3 hooks réécrits et ton plan d'action.</p>
+          <div class="plans" id="payplans">
+            <button class="plan" onclick="payNow('single')">
+              <span class="pname">Cette vidéo</span>
+              <span class="pprice">3€</span>
+              <span class="pdesc">Une analyse complète</span>
+            </button>
+            <button class="plan best" onclick="payNow('monthly')">
+              <span class="pname">Illimité</span>
+              <span class="pprice">22€<small>/mois</small></span>
+              <span class="pdesc">Autant de vidéos que tu veux</span>
+            </button>
+          </div>
+          <p class="payerr" id="payerr" role="alert"></p>        </div>
+
+        <div class="panel" id="cats">
+          <h3 class="lockrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>6 catégories masquées</h3>
+          <p class="sub">Débloque ton analyse complète et ton plan d'action pour percer sur TikTok.</p>
+          <ul class="cats" id="catlist"></ul>
+        </div>
+
+        <div id="full"></div>
+
+        <button class="again" onclick="reset()">Analyser une autre vidéo</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <a href="#">CGV</a><a href="#">Mentions légales</a><a href="#">Confidentialité</a><a href="#" id="manage" style="display:none" onclick="manage();return false">Gérer mon abonnement</a>
+</footer>
+
+<script>/* ---------- Analyse : notes et conseils (plafonnés à 75) ---------- */
+const CATS_LINK = ['Clarté', 'Suspense', 'Preuve', 'Proximité', 'Impact', 'Promesse'];
+const CATS_IDEA = ['Clarté', 'Accroche', 'Public', 'Émotion', 'Preuve', 'Format'];
+const CATS = CATS_LINK;
+const countWords = (s) => String(s || '').trim().split(/\s+/).filter(Boolean).length;
+
+const cleanCaption = (s) =>
+  String(s || '').replace(/#[\p{L}\p{N}_]+/gu, ' ').replace(/@[\w.]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+const W = {
+  curiosity: ['secret', 'personne', 'erreur', 'jamais', 'verite', 'pourquoi', 'comment', 'arrete', 'stop', 'piege', 'cache', 'ignore', 'savais', 'faux', 'mensonge', 'attention', 'avant de'],
+  power: ['gratuit', 'simple', 'rapide', 'facile', 'incroyable', 'fou', 'choque', 'argent', 'galere', 'euros', 'instant', 'en 10', 'sans', 'pire', 'meilleur', 'dangereux', 'insane', 'gagne'],
+  benefit: ['gagner', 'economiser', 'apprendre', 'perdre', 'reussir', 'obtenir', 'creer', 'devenir', 'eviter', 'augmenter', 'doubler', 'arreter de', 'trouver', 'lancer', 'vendre', 'maigrir', 'progresser', 'booster'],
+  weak: ["salut", "bonjour", "coucou", "hello", "hey", "aujourd'hui je vais", "dans cette video", "bienvenue", "alors voila", "je vais vous", "je vais te parler"],
+};
+const has = (t, list) => list.some((w) => t.includes(w));
+const cnt = (t, list) => list.filter((w) => t.includes(w)).length;
+
+function evaluate(raw) {
+  const text = raw.trim();
+  const t = norm(text);
+  const words = countWords(text);
+  const c = [];
+
+  c.push({ k: CATS[0], v: words <= 3 ? 25 : words <= 5 ? 60 : words <= 14 ? 100 : words <= 18 ? 70 : words <= 24 ? 45 : 25,
+    tip: words > 14 ? 'Coupe ton hook : vise 6 à 14 mots, il doit se dire en moins de 3 secondes.' : 'Ajoute un peu de contexte : vise 6 à 14 mots.' });
+
+  let cur = Math.min(100, cnt(t, W.curiosity) * 40 + (text.includes('?') ? 35 : 0));
+  if (!cur) cur = 12;
+  c.push({ k: CATS[1], v: cur, tip: "Ouvre une boucle : « personne ne te dit ça », « l'erreur n°1 », ou pose une question qui crée un manque." });
+
+  c.push({ k: CATS[2], v: /\d/.test(text) ? 100 : 20, tip: 'Ajoute un chiffre concret (« 3 erreurs », « en 7 jours », « +500 € ») : le cerveau y croit plus.' });
+
+  c.push({ k: CATS[3], v: has(' ' + t + ' ', [' tu ', ' ton ', ' ta ', ' tes ', ' toi ', ' vous ', ' votre ', ' vos ']) ? 100 : 25,
+    tip: "Adresse-toi directement au spectateur avec « tu / ton / ta » plutôt qu'à un public vague." });
+
+  c.push({ k: CATS[4], v: Math.min(100, cnt(t, W.power) * 50) || 15, tip: 'Glisse un mot fort : gratuit, simple, pire, sans, en 10 minutes, argent…' });
+
+  c.push({ k: CATS[5], v: has(t, W.benefit) ? 100 : 30, tip: "Dis ce que le spectateur gagne : un résultat, un gain de temps ou d'argent, une erreur évitée." });
+
+  let score = Math.round(c.reduce((s, x) => s + x.v, 0) / c.length);
+  const weak = has(t, W.weak);
+  if (weak) score = Math.max(5, score - 18);
+  if (words < 2) score = Math.min(score, 15);
+  return { score, c, weak };
+}
+
+const verdictFor = (s) =>
+  s >= 80 ? ['Hook viral', 'Il a tout pour arrêter le scroll.']
+  : s >= 60 ? ['Solide, mais perfectible', 'Quelques ajustements et il passe un cap.']
+  : s >= 40 ? ['Trop moyen', 'Les gens scrollent avant ta 2e phrase.']
+  : ['Scroll garanti', 'Ton hook passe inaperçu : il faut le réécrire.'];
+
+function topic(text) {
+  const t = text.trim().replace(/[?!.…]+$/, '');
+  const w = t.split(/\s+/);
+  return w.length > 9 ? w.slice(0, 9).join(' ') + '…' : t;
+}
+
+// La note affichée ne dépasse jamais 75 : le calcul interne (0-100) est ramené à 0-75.
+const SCALE = 0.75;
+const MAX_SCORE = 75;
+const scaled = (v) => Math.round(v * SCALE);
+
+const verdictIdea = (s) =>
+  s >= 80 ? ['Idée prometteuse', 'Elle a de quoi accrocher dès les premières secondes.']
+  : s >= 60 ? ['Bonne base', 'Quelques précisions et elle devient vraiment forte.']
+  : s >= 40 ? ['À retravailler', "Il manque encore ce qui donne envie de s'arrêter."]
+  : ['Idée trop floue', 'Précise le sujet, le public et ce que la personne va découvrir.'];
+
+const IDEA = {
+  audience: ['etudiant', 'debutant', 'parents', 'maman', 'createur', 'freelance', 'ado', 'entrepreneur', 'salarie', 'mecs', 'filles', 'gens', 'jeunes', 'vendeur', 'coach'],
+  emotion: ['fou', 'choc', 'incroyable', 'peur', 'honte', 'galere', 'surprenant', 'drole', 'dingue', 'insane', 'secret', 'pire', 'meilleur', 'rire', 'stress'],
+  proof: ['avant', 'apres', 'resultat', 'exemple', 'test', 'capture', 'preuve', 'temoignage'],
+  format: ['pov', 'tuto', 'storytime', 'defi', 'astuce', 'conseil', 'reaction', 'vlog', 'recette', 'routine', 'explique', 'montre', 'demo', 'coulisses', 'secondes', 'top '],
+};
+
+// Analyse d'une IDÉE de vidéo pas encore postée
+function evaluateIdea(raw) {
+  const text = raw.trim();
+  const t = norm(text);
+  const words = countWords(text);
+  const addr = has(' ' + t + ' ', [' tu ', ' ton ', ' ta ', ' tes ', ' toi ', ' vous ', ' votre ', ' vos ']);
+  const aud = has(t, IDEA.audience);
+  const c = [];
+
+  c.push({ k: CATS_IDEA[0], v: words < 6 ? 20 : words <= 9 ? 60 : words <= 60 ? 100 : words <= 90 ? 70 : 40,
+    tip: words > 60 ? 'Résume ton idée en une phrase : de quoi ça parle et ce que la personne va découvrir.'
+      : 'Précise ton idée : de quoi ça parle et ce que la personne va découvrir (une ou deux phrases).' });
+
+  let hk = Math.min(100, cnt(t, W.curiosity) * 40 + (text.includes('?') ? 35 : 0));
+  if (!hk) hk = 12;
+  c.push({ k: CATS_IDEA[1], v: hk, tip: "Trouve une première phrase qui crée un manque : « personne ne te dit ça », « l'erreur n°1 », ou une question." });
+
+  c.push({ k: CATS_IDEA[2], v: addr && aud ? 100 : addr || aud ? 60 : 20, tip: 'Dis à qui tu parles (étudiants, débutants, parents…) et adresse-toi à eux avec « tu ».' });
+
+  c.push({ k: CATS_IDEA[3], v: Math.min(100, cnt(t, IDEA.emotion) * 50) || 15, tip: "Ajoute une émotion forte : surprise, humour, peur de rater quelque chose, fierté…" });
+
+  c.push({ k: CATS_IDEA[4], v: /\d/.test(text) ? 100 : has(t, IDEA.proof) ? 70 : 20, tip: "Prévois une preuve visible : un chiffre, un avant/après, une capture d'écran ou un résultat à l'écran." });
+
+  c.push({ k: CATS_IDEA[5], v: has(t, IDEA.format) ? 100 : 30, tip: 'Choisis un format clair (tuto, avant/après, défi, storytime, POV) pour que les gens comprennent vite.' });
+
+  return { score: Math.round(c.reduce((s, x) => s + x.v, 0) / c.length), c, weak: false };
+}
+
+// Rapport complet : n'est renvoyé au navigateur qu'une fois le paiement vérifié.
+function buildReport(raw, kind = 'link') {
+  const idea = kind === 'idea';
+  const r = idea ? evaluateIdea(raw) : evaluate(raw);
+  const [verdict, verdictSub] = (idea ? verdictIdea : verdictFor)(r.score);
+  const tp = topic(idea ? raw.split(/[.!?\n]/)[0] : raw);
+
+  const hooks = [
+    `Ce que personne ne te dit sur : « ${tp} »`,
+    `3 erreurs qui ruinent « ${tp} » (la 2e est la pire)`,
+    `J'ai testé « ${tp} » pendant 30 jours, voici le résultat`,
+  ].map((h, i) => ({ h, s: scaled(Math.min(94, Math.max(r.score + 14, 66) + [8, 4, 0][i])) }));
+
+  const tips = [...r.c].sort((a, b) => a.v - b.v).slice(0, 3).filter((x) => x.v < 80)
+    .map((x) => ({ t: `${x.k} (${scaled(x.v)}/100)`, d: x.tip }));
+  if (r.weak) tips.push({ t: 'Ouverture banale', d: "Supprime « Salut / aujourd'hui je vais… » et commence par le sujet ou le résultat." });
+  tips.push(idea
+    ? { t: 'Filme la fin en premier', d: "Commence par le résultat ou l'avant/après, puis explique comment tu y arrives." }
+    : { t: 'Montre avant de parler', d: "Mets le résultat ou l'élément le plus visuel dans la 1re seconde." });
+
+  const plan = idea ? [
+    { t: '0 à 3 secondes', d: "Montre le résultat ou pose la question la plus forte. Pas de « salut »." },
+    { t: '3 à 20 secondes', d: "Donne la preuve ou l'exemple, avec un élément visible à l'écran." },
+    { t: 'Fin de vidéo', d: "Termine par une question ou une suite (« partie 2 en commentaire ») pour donner envie de réagir." },
+  ] : [];
+
+  return {
+    kind, score: scaled(r.score), weak: r.weak, verdict, verdictSub,
+    cats: r.c.map(({ k, v }) => ({ k, v: scaled(v) })),
+    hooks, tips, plan,
+  };
+}
+
+
+
+/* ====== CONFIG — à remplir ====== */
+const PAYMENT_LINK_SINGLE  = 'https://buy.stripe.com/5kQ6oJa0ebjy2wm9qcc3m05';   // lien de paiement Stripe : 3 € · 1 analyse
+const PAYMENT_LINK_MONTHLY = 'https://buy.stripe.com/dRm3cx6O29bq9YO31Oc3m04';   // lien de paiement Stripe : 22 €/mois · analyses illimitées
+const PORTAL_URL           = '#';   // (optionnel) lien du portail client Stripe, pour que les abonnés résilient
+
+// Empreintes des codes secrets à mettre dans les adresses de redirection Stripe (voir explications).
+const HASH_SINGLE  = 'c88997ae2aaa22e61af66795a978101d26bc6d8825504ecb5557ec69d7225599';
+const HASH_MONTHLY = '25505032e8c12a19540ec0893624b7f86bc9026c34098b1c6f7ef2246251d4da';
+/* ================================ */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k){ try{ return localStorage.getItem(k) }catch(e){ return null } },
+  set(k,v){ try{ localStorage.setItem(k,v) }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k) }catch(e){} }
+};
+let litTimer=null, current=null;
+
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ---------- Réacteur : 60 segments qui s'allument ---------- */
+const TICKS=60;
+function lerp(a,b,t){ return Math.round(a+(b-a)*t) }
+function tickColor(i){ const t=i/(TICKS-1); return `rgb(${lerp(47,139,t)},${lerp(107,92,t)},${lerp(255,246,t)})` }
+function buildReactor(host){
+  let s='<svg viewBox="0 0 240 240" aria-hidden="true">';
+  for(let i=0;i<TICKS;i++){
+    const a=(i/TICKS)*2*Math.PI-Math.PI/2, c=Math.cos(a), n=Math.sin(a);
+    s+=`<line class="tick" data-i="${i}" x1="${120+c*92}" y1="${120+n*92}" x2="${120+c*110}" y2="${120+n*110}" stroke="rgba(150,150,255,.14)"/>`;
+  }
+  host.innerHTML=s+'</svg>';
+}
+function lightTo(host,n,animate){
+  const ticks=[...host.querySelectorAll('.tick')];
+  const target=Math.round(n/100*TICKS);
+  clearInterval(litTimer);
+  const paint=k=>ticks.forEach((t,i)=>t.setAttribute('stroke',i<k?tickColor(i):'rgba(150,150,255,.14)'));
+  if(!animate){ paint(target); return }
+  let k=0; litTimer=setInterval(()=>{ k++; paint(k); if(k>=target) clearInterval(litTimer) },18);
+}
+buildReactor($('demoSvg')); lightTo($('demoSvg'),60,false);
+buildReactor($('loadSvg')); buildReactor($('ringSvg'));
+
+/* ---------- Interface ---------- */
+function showErr(which,m){ const e=$('err-'+which); e.textContent=m; e.style.display='block' }
+function hideErr(){ $('err-link').style.display='none'; $('err-idea').style.display='none' }
+function showPayErr(m){ const e=$('payerr'); e.textContent=m||''; e.style.display=m?'block':'none' }
+function updateManage(){ $('manage').style.display = (store.get('tb_sub')==='1' && /^https:\/\//.test(PORTAL_URL)) ? 'inline' : 'none' }
+
+// Notes sur 75 maximum : vert à partir de 52, orange à partir de 34
+const colorFor=v=>v>=52?'var(--ok)':v>=34?'var(--warn)':'var(--bad)';
+const nbWords=s=>s.trim().split(/\s+/).filter(Boolean).length;
+const isTikTok=u=>{ try{ return /(^|\.)tiktok\.com$/i.test(new URL(u).hostname) }catch(e){ return false } };
+const handleOf=u=>{ const m=/\/@([\w.]+)/.exec(u); return m?m[1]:'' };
+
+// Lecture de la légende : une petite fonction du site (api/oembed.js) interroge TikTok à notre place
+async function fetchMeta(url){
+  const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),10000);
+  const manual='La lecture automatique est indisponible. Colle la légende de ta vidéo ci-dessous.';
+  try{
+    const r=await fetch('/api/oembed?url='+encodeURIComponent(url),{signal:ctl.signal});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error ? d.error+' Colle sa légende ci-dessous.' : manual);
+    return {caption:d.caption||'',author:d.author||'',thumbnail:d.thumbnail||''};
+  }catch(e){
+    if(/ci-dessous/.test(e.message)) throw e;
+    throw new Error(manual);
+  }finally{ clearTimeout(t) }
+}
+
+/* ---------- Analyse (tout se passe dans cette page) ---------- */
+// mode : 'link' (vidéo déjà postée) ou 'idea' (idée de vidéo)
+async function analyze(mode, inputOverride, opts={}){
+  hideErr();
+  let input=inputOverride;
+  if(!input){
+    if(mode==='link'){
+      const url=$('url').value.trim();
+      if(!isTikTok(url)){ showErr('link','Colle un lien TikTok valide, par exemple https://www.tiktok.com/@toi/video/…'); return }
+      if($('cap-wrap').style.display!=='none'){
+        const cap=$('cap').value.trim();
+        if(nbWords(cap)<2){ showErr('link','Colle la légende de ta vidéo (au moins quelques mots).'); return }
+        input={mode:'link',url,caption:cap};
+      }else input={mode:'link',url};
+    }else{
+      const idea=$('idea').value.trim();
+      if(nbWords(idea)<5){ showErr('idea','Décris ton idée en une ou deux phrases.'); return }
+      input={mode:'idea',idea};
+    }
+  }
+  const btns=[$('go-link'),$('go-idea')]; btns.forEach(b=>b.disabled=true);
+  $('home').style.display='none'; $('loading').style.display='block';
+  $('lmsg').textContent = input.mode==='link' && input.caption==null ? 'Récupération de ta vidéo…' : 'Analyse en cours…';
+
+  const started=Date.now();
+  let meta=null, raw='';
+  try{
+    if(input.mode==='link'){
+      if(input.caption!=null){
+        raw=cleanCaption(input.caption); meta={caption:input.caption,author:handleOf(input.url),thumbnail:''};
+        if(nbWords(raw)<2) throw new Error('Colle la légende de ta vidéo (au moins quelques mots).');
+      }else{
+        meta=await fetchMeta(input.url); raw=cleanCaption(meta.caption);
+        if(nbWords(raw)<2) throw new Error("Cette vidéo n'a pas de légende lisible. Colle son texte ci-dessous.");
+      }
+    }else raw=input.idea.replace(/\s+/g,' ').slice(0,600);
+  }catch(e){
+    $('loading').style.display='none'; $('home').style.display='block'; btns.forEach(b=>b.disabled=false);
+    if(input.mode==='link'){ $('cap-wrap').style.display='block'; showErr('link',e.message); $('cap').focus() }
+    return;
+  }
+  await new Promise(r=>setTimeout(r,Math.max(0,1500-(Date.now()-started))));
+  btns.forEach(b=>b.disabled=false);
+
+  const unlocked = !!opts.unlock || store.get('tb_sub')==='1';
+  if(opts.unlock && opts.plan==='single') store.set('tb_last', JSON.stringify({input}));
+  current={input, meta, report:buildReport(raw,input.mode), unlocked};
+  show();
+}
+
+function show(){
+  const {input,meta,report,unlocked}=current;
+  $('loading').style.display='none'; $('result').style.display='block';
+  const isIdea = input.mode==='idea';
+  $('who').textContent = isIdea ? 'ton idée de vidéo' : (meta&&meta.author ? '@'+meta.author.replace(/^@/,'') : 'ta vidéo');
+  const th=$('vthumb');
+  if(isIdea){
+    $('vid').style.display='flex'; th.style.display='none'; $('vcap').textContent=input.idea;
+  }else if(meta){
+    $('vid').style.display='flex'; $('vcap').textContent=meta.caption||'';
+    if(/^https:\/\//.test(meta.thumbnail||'')){ th.style.display='block'; th.src=meta.thumbnail } else { th.style.display='none'; th.removeAttribute('src') }
+  }else $('vid').style.display='none';
+
+  clearInterval(litTimer); lightTo($('ringSvg'),0,false);
+  showPayErr('');
+  if(unlocked) renderPaid(report); else renderLocked(isIdea?CATS_IDEA:CATS_LINK);
+  updateManage();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderLocked(cats){
+  $('score').textContent='??'; $('ring').className='reactor hidden scan';
+  $('verdict').textContent=''; $('vsub').textContent='';
+  $('catlist').innerHTML=cats.map(k=>`<li class="cat lock"><div class="t"><span>${esc(k)}</span><em>00/100</em></div><div class="track"><i></i></div></li>`).join('');
+  $('pay').style.display='block'; $('cats').style.display='block'; $('full').innerHTML='';
+}
+
+function renderPaid(r){
+  const idea = r.kind==='idea';
+  $('ring').className='reactor';
+  lightTo($('ringSvg'),r.score,true);   // r.score ≤ 75
+  let n=0; const st=setInterval(()=>{ n+=2; if(n>=r.score){n=r.score;clearInterval(st)} $('score').textContent=n },18);
+  $('verdict').textContent=r.verdict; $('vsub').textContent=r.weak?r.verdictSub+' (ouverture banale détectée)':r.verdictSub;
+  $('pay').style.display='none'; $('cats').style.display='none';
+  $('full').innerHTML=`
+    <div class="panel"><h3>Le détail par catégorie</h3><div style="height:8px"></div><ul class="cats">${
+      r.cats.map(x=>`<li class="cat"><div class="t"><span>${esc(x.k)}</span><em style="color:${colorFor(x.v)}">${x.v}/100</em></div><div class="track"><i data-w="${x.v}"></i></div></li>`).join('')}</ul></div>
+    <div class="panel"><h3>${idea?'3 accroches pour lancer ta vidéo':'3 versions réécrites de ton hook'}</h3><div style="height:12px"></div>${
+      r.hooks.map(x=>`<div class="hk"><div><p>${esc(x.h)}</p><small>Note estimée : ${x.s}/100</small></div><button onclick="copyText(this)" data-t="${esc(x.h)}">Copier</button></div>`).join('')}</div>
+    <div class="panel"><h3>${idea?'Pour améliorer ta vidéo':'Ton plan d\'action'}</h3><div style="height:8px"></div><ul class="tips">${
+      r.tips.map(x=>`<li><b>${esc(x.t)}.</b> ${esc(x.d)}</li>`).join('')}</ul></div>
+    ${idea && r.plan.length ? `<div class="panel"><h3>Structure conseillée</h3><div style="height:8px"></div><ul class="tips">${
+      r.plan.map(x=>`<li><b>${esc(x.t)}.</b> ${esc(x.d)}</li>`).join('')}</ul></div>` : ''}`;
+  requestAnimationFrame(()=>setTimeout(()=>document.querySelectorAll('#full .track i').forEach(e=>e.style.width=e.dataset.w+'%'),60));
+}
+
+/* ---------- Paiement Stripe ---------- */
+function payNow(plan){
+  if(!current) return;
+  const link = plan==='monthly' ? PAYMENT_LINK_MONTHLY : PAYMENT_LINK_SINGLE;
+  if(!/^https:\/\//.test(link)){ showPayErr("Le paiement n'est pas encore disponible."); return }
+  store.set('tb_input', JSON.stringify(current.input));   // pour retrouver l'analyse au retour de Stripe
+  window.location.href = link;
+}
+function manage(){ if(/^https:\/\//.test(PORTAL_URL)) window.open(PORTAL_URL,'_blank','noopener') }
+
+function copyText(b){ navigator.clipboard?.writeText(b.dataset.t); b.textContent='Copié'; setTimeout(()=>b.textContent='Copier',1500) }
+
+function reset(){
+  clearInterval(litTimer); store.del('tb_last'); store.del('tb_input');
+  $('result').style.display='none'; $('home').style.display='block';
+  $('url').value=''; $('idea').value=''; $('cap').value=''; $('cap-wrap').style.display='none'; current=null; hideErr();
+  window.scrollTo({top:0});
+}
+
+/* ---------- Démarrage : retour de Stripe ou dernière analyse payée ---------- */
+(async function init(){
+  updateManage();
+  const p=new URLSearchParams(location.search);
+  const code=p.get('k');
+  if(code || p.get('paid') || p.get('canceled')) history.replaceState(null,'',location.pathname);
+
+  if(code){
+    let plan=null;
+    try{ const h=await sha256Hex(code); plan = h===HASH_SINGLE ? 'single' : h===HASH_MONTHLY ? 'monthly' : null }catch(e){}
+    let input=null;
+    try{ input=JSON.parse(store.get('tb_input')||'null') }catch(e){}
+    store.del('tb_input');
+    if(plan && input){
+      if(plan==='monthly') store.set('tb_sub','1');
+      analyze(input.mode,input,{unlock:true,plan});
+    }
+    return;
+  }
+  try{
+    const last=JSON.parse(store.get('tb_last')||'null');
+    if(last && last.input) analyze(last.input.mode,last.input,{unlock:true,plan:'single'});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
